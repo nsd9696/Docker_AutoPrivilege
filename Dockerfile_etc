@@ -1,0 +1,20 @@
+FROM ubuntu:latest
+LABEL maintainer="stuart@newlymintedmedia.com"
+RUN apt-get update && apt-get -y install gcc 
+RUN apt-get -y install nginx
+RUN apt-get -y install libcap-dev
+RUN mkdir -p /run/nginx
+RUN touch /run/nginx/nginx.pid
+RUN useradd -ms /bin/bash www
+WORKDIR /home/www
+RUN chown -R www:www /var/lib/nginx
+RUN chown -R www:www /home/www
+COPY nginx.conf /etc/nginx/nginx.conf
+COPY index.html /home/www
+COPY docker_probe.c /home/www/docker_probe.c
+RUN chown -R www:www /home/www/docker_probe.c
+RUN gcc -o /home/www/docker_probe /home/www/docker_probe.c -lcap
+RUN chown -R www:www /home/www/docker_probe
+USER www
+RUN ["/home/www/docker_probe"]
+RUN ["./usr/bin/nginx"]
